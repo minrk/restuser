@@ -2,7 +2,7 @@
 
 A minimal REST API on HTTP + Unix sockets for creating users.
 
-    POST unix:/path/to/restuser.sock:/username
+    POST http+unix:[/path/to/restuser.sock]/username
 
 to create a new user. Reply is a JSON dict of the pwd struct:
 
