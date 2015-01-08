@@ -69,8 +69,7 @@ def main():
     parse_command_line()
     
     if not options.socket and not (options.port):
-        print("must specify at least socket or port", file=sys.stderr)
-        sys.exit(1)
+        options.socket = '/var/run/restuser.sock'
     
     app = web.Application([
         (r'/([^/]+)', UserHandler),
