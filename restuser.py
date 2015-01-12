@@ -34,12 +34,14 @@ class UserHandler(web.RequestHandler):
         
         Return the new user's struct
         """
-        groups = self.settings.get('groups', None)
+        group = self.settings.get('group', None)
         shell = self.settings.get('shell', '/bin/bash')
+        skeldir = self.settings.get('skeldir', None)
         cmd = ['useradd', '-m', '-s', shell]
-        if groups:
-            cmd.extend(['-G', groups])
-        # add -k SKEL_DIR to populate hone from skeleton dir
+        if group:
+            cmd.extend(['-G', group])
+        if skeldir and os.path.exists(skeldir):
+            cmd.extend(['-k', skeldir])
         cmd.append(name)
         
         app_log.info("Running %s", cmd)
@@ -64,16 +66,20 @@ def main():
     define('ip', default=None, help='IP to listen on')
     define('port', default=None, help='port to listen on')
     define('socket', default=None, help='unix socket path to bind (instead of ip:port)')
-    define('groups', default='', help='comma separated group list for new users `students,other`')
+    define('group', default='', help='comma separated group list for new users `students,other`')
+    define('skeldir', default='', help='skeleton directory that will be used for new homedirs')
+    define('shell', default='/bin/bash', help='default shell')
     
     parse_command_line()
     
     if not options.socket and not (options.port):
         options.socket = '/var/run/restuser.sock'
     
-    app = web.Application([
-        (r'/([^/]+)', UserHandler),
-    ])
+    app = web.Application(
+        [(r'/([^/]+)', UserHandler)],
+        group=options.group,
+        skeldir=options.skeldir,
+        shell=options.shell)
     if options.socket:
         socket = bind_unix_socket(options.socket, mode=0o600)
         server = HTTPServer(app)
@@ -85,8 +91,7 @@ def main():
     except KeyboardInterrupt:
         print("\ninterrupted\n", file=sys.stderr)
         return
-    
-    
+
 
 if __name__ == '__main__':
     main()
