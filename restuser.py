@@ -37,11 +37,14 @@ class UserHandler(web.RequestHandler):
         group = self.settings.get('group', None)
         shell = self.settings.get('shell', '/bin/bash')
         skeldir = self.settings.get('skeldir', None)
+        homedir = self.settings.get('homedir', None)
         cmd = ['useradd', '-m', '-s', shell]
         if group:
             cmd.extend(['-G', group])
         if skeldir and os.path.exists(skeldir):
             cmd.extend(['-k', skeldir])
+        if homedir:
+            cmd.extend(['-d', homedir.replace('USERNAME', name)])
         cmd.append(name)
         
         app_log.info("Running %s", cmd)
@@ -68,6 +71,7 @@ def main():
     define('socket', default=None, help='unix socket path to bind (instead of ip:port)')
     define('group', default='', help='comma separated group list for new users `students,other`')
     define('skeldir', default='', help='skeleton directory that will be used for new homedirs')
+    define('homedir', default=None, help='path of a home directory for new user. "USERNAME" will be replaced by the name of user')
     define('shell', default='/bin/bash', help='default shell')
     
     parse_command_line()
@@ -79,6 +83,7 @@ def main():
         [(r'/([^/]+)', UserHandler)],
         group=options.group,
         skeldir=options.skeldir,
+        homedir=options.homedir,
         shell=options.shell)
     if options.socket:
         socket = bind_unix_socket(options.socket, mode=0o600)
